@@ -145,12 +145,18 @@ const (
 const (
 	RoleGuestUser  = 0
 	RoleCommonUser = 1
+	RoleAgentUser  = 5  // 代理商角色，介于普通用户和管理员之间
 	RoleAdminUser  = 10
 	RoleRootUser   = 100
 )
 
 func IsValidateRole(role int) bool {
-	return role == RoleGuestUser || role == RoleCommonUser || role == RoleAdminUser || role == RoleRootUser
+	return role == RoleGuestUser || role == RoleCommonUser || role == RoleAgentUser || role == RoleAdminUser || role == RoleRootUser
+}
+
+// IsAgentUser 检查用户是否为代理商或更高级别
+func IsAgentUser(role int) bool {
+	return role >= RoleAgentUser
 }
 
 var (

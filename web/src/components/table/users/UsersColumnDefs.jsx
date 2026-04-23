@@ -31,6 +31,9 @@ import {
 import { IconMore } from '@douyinfe/semi-icons';
 import { renderGroup, renderNumber, renderQuota } from '../../../helpers';
 
+// 代理商角色常量
+const ROLE_AGENT = 5;
+
 /**
  * Render user role
  */
@@ -40,6 +43,12 @@ const renderRole = (role, t) => {
       return (
         <Tag color='blue' shape='circle'>
           {t('普通用户')}
+        </Tag>
+      );
+    case 5:
+      return (
+        <Tag color='purple' shape='circle'>
+          {t('代理商')}
         </Tag>
       );
     case 10:
@@ -174,20 +183,38 @@ const renderQuotaUsage = (text, record, t) => {
  * Render invite information
  */
 const renderInviteInfo = (text, record, t) => {
+  // 检查是否有代理商推广信息和邀请人信息
+  // 代理商需要有有效的 agent_name 才显示（避免只显示数字ID）
+  // 使用 Boolean() 确保返回布尔值，避免 React 渲染数字 0
+  const hasAgent = Boolean(record.agent_id > 0 && record.agent_name);
+  
+  const hasInviter = record.inviter_id && record.inviter_id > 0;
+
   return (
     <div>
-      <Space spacing={1}>
+      <Space spacing={1} wrap>
         <Tag color='white' shape='circle' className='!text-xs'>
           {t('邀请')}: {renderNumber(record.aff_count)}
         </Tag>
         <Tag color='white' shape='circle' className='!text-xs'>
           {t('收益')}: {renderQuota(record.aff_history_quota)}
         </Tag>
-        <Tag color='white' shape='circle' className='!text-xs'>
-          {record.inviter_id === 0
-            ? t('无邀请人')
-            : `${t('邀请人')}: ${record.inviter_id}`}
-        </Tag>
+        {/* 邀请人信息 - 使用原有逻辑 */}
+        {hasInviter ? (
+          <Tag color='cyan' shape='circle' className='!text-xs'>
+            {t('邀请人')}: {record.inviter_id}
+          </Tag>
+        ) : (
+          <Tag color='grey' shape='circle' className='!text-xs'>
+            {t('无邀请人')}
+          </Tag>
+        )}
+        {/* 代理商信息 - 只有存在代理商名称时才显示 */}
+        {hasAgent && (
+          <Tag color='purple' shape='circle' className='!text-xs'>
+            {t('代理商')}: {record.agent_name}
+          </Tag>
+        )}
       </Space>
     </div>
   );
@@ -209,6 +236,7 @@ const renderOperations = (
     showResetPasskeyModal,
     showResetTwoFAModal,
     showUserSubscriptionsModal,
+    showCommissionModalForUser,
     t,
   },
 ) => {
@@ -223,6 +251,15 @@ const renderOperations = (
       onClick: () => showUserSubscriptionsModal(record),
     },
     {
+      node: 'divider',
+    },
+    // 代理商分成调整（仅对代理商显示）
+    record.role === ROLE_AGENT && {
+      node: 'item',
+      name: t('调整分成比例'),
+      onClick: () => showCommissionModalForUser(record),
+    },
+    record.role === ROLE_AGENT && {
       node: 'divider',
     },
     {
@@ -244,7 +281,7 @@ const renderOperations = (
       type: 'danger',
       onClick: () => showDeleteModal(record),
     },
-  ];
+  ].filter(Boolean);
 
   return (
     <Space>
@@ -309,6 +346,7 @@ export const getUsersColumns = ({
   showResetPasskeyModal,
   showResetTwoFAModal,
   showUserSubscriptionsModal,
+  showCommissionModalForUser,
 }) => {
   return [
     {
@@ -366,6 +404,7 @@ export const getUsersColumns = ({
           showResetPasskeyModal,
           showResetTwoFAModal,
           showUserSubscriptionsModal,
+          showCommissionModalForUser,
           t,
         }),
     },

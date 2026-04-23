@@ -275,3 +275,13 @@ custom_oauth.name_empty: "Provider name cannot be empty"
 custom_oauth.has_bindings: "Cannot delete provider with existing user bindings"
 custom_oauth.binding_not_found: "OAuth binding not found"
 custom_oauth.provider_id_field_invalid: "Could not extract user ID from provider response"
+
+# Agent messages
+agent.application_pending: "You already have a pending agent application"
+agent.already_agent: "You are already an agent"
+agent.application_approved: "Agent application approved"
+agent.application_rejected: "Agent application rejected"
+agent.domain_already_used: "This domain is already used by another agent"
+agent.domain_limit_exceeded: "Domain limit exceeded (max 5 domains)"
+agent.no_permission: "No permission"
+agent.domain_verified: "Domain verified successfully"

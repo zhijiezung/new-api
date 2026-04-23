@@ -45,6 +45,13 @@ type User struct {
 	AffQuota         int            `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
 	AffHistoryQuota  int            `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
 	InviterId        int            `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	AgentId              int            `json:"agent_id" gorm:"type:int;column:agent_id;index;default:0"`           // 所属代理商ID（推广关联）
+	AgentDomainId        int            `json:"agent_domain_id" gorm:"type:int;column:agent_domain_id;index"`        // 注册来源域名ID
+	AgentName            string         `json:"agent_name,omitempty" gorm:"-:all"`                                  // 代理商名称（非数据库字段，用于前端显示）
+	CommissionRate       int            `json:"commission_rate" gorm:"type:int;column:commission_rate;default:0"`   // 代理商分成比例（百分比）
+	CommissionBalance    int            `json:"commission_balance" gorm:"type:int;column:commission_balance;default:0"` // 代理商可提现余额
+	CommissionTotal      int            `json:"commission_total" gorm:"type:int;column:commission_total;default:0"` // 代理商累计分成总额
+	CommissionWithdrawn  int            `json:"commission_withdrawn" gorm:"type:int;column:commission_withdrawn;default:0"` // 代理商已提现金额                                  // 代理商名称（非数据库字段，用于前端显示）
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
 	LinuxDOId        string         `json:"linux_do_id" gorm:"column:linux_do_id;index"`
 	Setting          string         `json:"setting" gorm:"type:text;column:setting"`
@@ -122,6 +129,17 @@ func generateDefaultSidebarConfigForRole(userRole int) string {
 		"enabled":  true,
 		"topup":    true,
 		"personal": true,
+	}
+
+	// 代理商区域 - 代理商及以上角色可以访问
+	if userRole >= common.RoleAgentUser {
+		defaultConfig["agent"] = map[string]interface{}{
+			"enabled":    true,
+			"dashboard":  true,  // 代理商看板
+			"users":      true,  // 推广用户管理
+			"domain":     true,  // 域名管理
+			"promotion":  true,  // 推广链接
+		}
 	}
 
 	// 管理员区域 - 根据角色决定
@@ -219,7 +237,58 @@ func GetAllUsers(pageInfo *common.PageInfo) (users []*User, total int64, err err
 		return nil, 0, err
 	}
 
+	// 附加代理商名称
+	AttachAgentName(users)
+
 	return users, total, nil
+}
+
+// UserWithAgentName 带代理商名称的用户结构
+type UserWithAgentName struct {
+	*User
+	AgentName string `json:"agent_name,omitempty"`
+}
+
+// AttachAgentName 为用户列表附加代理商名称
+func AttachAgentName(users []*User) {
+	// 收集所有代理商ID
+	agentIds := make(map[int]bool)
+	for _, user := range users {
+		if user.AgentId > 0 {
+			agentIds[user.AgentId] = true
+		}
+	}
+
+	if len(agentIds) == 0 {
+		return
+	}
+
+	// 查询代理商用户名
+	var agentUsers []*User
+	ids := make([]int, 0, len(agentIds))
+	for id := range agentIds {
+		ids = append(ids, id)
+	}
+	DB.Where("id IN ?", ids).Select("id, username, display_name").Find(&agentUsers)
+
+	// 构建ID到名称的映射
+	agentNames := make(map[int]string)
+	for _, agent := range agentUsers {
+		if agent.DisplayName != "" {
+			agentNames[agent.Id] = agent.DisplayName
+		} else {
+			agentNames[agent.Id] = agent.Username
+		}
+	}
+
+	// 填充用户的 AgentName 字段
+	for _, user := range users {
+		if user.AgentId > 0 {
+			if name, ok := agentNames[user.AgentId]; ok {
+				user.AgentName = name
+			}
+		}
+	}
 }
 
 func SearchUsers(keyword string, group string, startIdx int, num int) ([]*User, int64, error) {

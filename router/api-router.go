@@ -379,5 +379,69 @@ func SetApiRouter(router *gin.Engine) {
 			deploymentsRoute.POST("/:id/extend", controller.ExtendDeployment)
 			deploymentsRoute.DELETE("/:id", controller.DeleteDeployment)
 		}
+
+		// Agent routes (代理商路由)
+		agentRoute := apiRouter.Group("/agent")
+		agentRoute.Use(middleware.UserAuth())
+		{
+			// 申请代理商（普通用户可访问）
+			agentRoute.POST("/apply", controller.ApplyAgent)
+			agentRoute.GET("/application", controller.GetAgentApplicationStatus)
+
+			// 代理商专属功能（需要代理商权限）
+			agentRoute.GET("/domains", middleware.AgentAuth(), controller.GetAgentDomains)
+			agentRoute.POST("/domain", middleware.AgentAuth(), controller.AddAgentDomain)
+			agentRoute.POST("/domain/:id/verify", middleware.AgentAuth(), controller.VerifyAgentDomain)
+			agentRoute.DELETE("/domain/:id", middleware.AgentAuth(), controller.DeleteAgentDomain)
+			agentRoute.GET("/subdomain", middleware.AgentAuth(), controller.GetAgentSubdomain)
+
+			// 代理商用户管理
+			agentRoute.GET("/users", middleware.AgentAuth(), controller.GetAgentUsers)
+			agentRoute.GET("/users/stats", middleware.AgentAuth(), controller.GetAgentUserStats)
+
+			// 代理商Dashboard
+			agentRoute.GET("/dashboard/stats", middleware.AgentAuth(), controller.GetAgentDashboardStats)
+			agentRoute.GET("/dashboard/topup", middleware.AgentAuth(), controller.GetAgentTopupData)
+			agentRoute.GET("/dashboard/quota", middleware.AgentAuth(), controller.GetAgentQuotaData)
+
+			// 代理商分成相关
+			agentRoute.GET("/commission/stats", middleware.AgentAuth(), controller.GetAgentCommissionStats)
+			agentRoute.GET("/commission/logs", middleware.AgentAuth(), controller.GetAgentCommissionLogs)
+			agentRoute.POST("/withdrawal", middleware.AgentAuth(), controller.ApplyWithdrawal)
+			agentRoute.GET("/withdrawals", middleware.AgentAuth(), controller.GetAgentWithdrawals)
+		}
+
+		// Agent admin routes (管理员审核代理商申请)
+		agentAdminRoute := apiRouter.Group("/admin/agent")
+		agentAdminRoute.Use(middleware.AdminAuth())
+		{
+			agentAdminRoute.GET("/applications", controller.GetAllAgentApplications)
+			agentAdminRoute.POST("/applications/:id/approve", controller.ApproveAgentApplication)
+			agentAdminRoute.POST("/applications/:id/reject", controller.RejectAgentApplication)
+
+			// 超管全局代理统计
+			agentAdminRoute.GET("/dashboard/stats", controller.GetAllAgentDashboardStats)
+			agentAdminRoute.GET("/dashboard/trend", controller.GetAllAgentDashboardTrend)
+
+			// 管理员查看指定代理商域名
+			agentAdminRoute.GET("/domains", controller.GetAgentDomainsByAdmin)
+
+			// 超管调整分成比例
+			agentAdminRoute.PUT("/commission", controller.UpdateAgentCommissionRate)
+
+			// 超管提现审核
+			agentAdminRoute.GET("/withdrawals", controller.GetAllWithdrawals)
+			agentAdminRoute.POST("/withdrawal/:id/approve", controller.ApproveWithdrawal)
+			agentAdminRoute.POST("/withdrawal/:id/reject", controller.RejectWithdrawal)
+		}
+
+		// Agent dashboard routes (代理商数据看板，代理商可访问)
+		agentDashboardRoute := apiRouter.Group("/agent/dashboard")
+		agentDashboardRoute.Use(middleware.UserAuth())
+		{
+			// 增强统计接口（根据角色返回不同数据）
+			agentDashboardRoute.GET("/enhanced/stats", middleware.AgentAuth(), controller.GetAgentDashboardStatsEnhanced)
+			agentDashboardRoute.GET("/enhanced/trend", middleware.AgentAuth(), controller.GetAgentDashboardTrendEnhanced)
+		}
 	}
 }

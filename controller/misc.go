@@ -48,6 +48,37 @@ func GetStatus(c *gin.Context) {
 	passkeySetting := system_setting.GetPasskeySettings()
 	legalSetting := system_setting.GetLegalSettings()
 
+	// 获取服务器地址，优先使用请求头中的代理域名
+	serverAddress := system_setting.ServerAddress
+	// 检查是否有代理域名（通过 X-Forwarded-Host 或 Host 头）
+	if forwardedHost := c.GetHeader("X-Forwarded-Host"); forwardedHost != "" {
+		// 构建完整的服务器地址
+		proto := "http"
+		if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+			proto = "https"
+		}
+		serverAddress = proto + "://" + forwardedHost
+	} else if host := c.GetHeader("Host"); host != "" {
+		// 如果 Host 头与配置的 ServerAddress 不同，可能是代理域名
+		proto := "http"
+		if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+			proto = "https"
+		}
+		configuredHost := ""
+		if system_setting.ServerAddress != "" {
+			// 从配置的 ServerAddress 中提取 host
+			if idx := strings.Index(system_setting.ServerAddress, "://"); idx != -1 {
+				configuredHost = system_setting.ServerAddress[idx+3:]
+			} else {
+				configuredHost = system_setting.ServerAddress
+			}
+		}
+		// 如果当前 Host 与配置的不同，说明是代理域名访问
+		if host != configuredHost {
+			serverAddress = proto + "://" + host
+		}
+	}
+
 	data := gin.H{
 		"version":                     common.Version,
 		"start_time":                  common.StartTime,
@@ -66,7 +97,7 @@ func GetStatus(c *gin.Context) {
 		"footer_html":                 common.Footer,
 		"wechat_qrcode":               common.WeChatAccountQRCodeImageURL,
 		"wechat_login":                common.WeChatAuthEnabled,
-		"server_address":              system_setting.ServerAddress,
+		"server_address":              serverAddress,
 		"turnstile_check":             common.TurnstileCheckEnabled,
 		"turnstile_site_key":          common.TurnstileSiteKey,
 		"top_up_link":                 common.TopUpLink,

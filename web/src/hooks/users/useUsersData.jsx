@@ -264,6 +264,42 @@ export const useUsersData = () => {
     });
   };
 
+  // 代理商分成比例调整
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [commissionUser, setCommissionUser] = useState(null);
+  const [commissionRate, setCommissionRate] = useState(5);
+
+  const showCommissionModalForUser = (user) => {
+    setCommissionUser(user);
+    setCommissionRate(user.commission_rate || 5);
+    setShowCommissionModal(true);
+  };
+
+  const closeCommissionModal = () => {
+    setShowCommissionModal(false);
+    setCommissionUser(null);
+  };
+
+  const updateCommissionRate = async () => {
+    if (!commissionUser) return;
+    try {
+      const res = await API.put('/api/admin/agent/commission', {
+        user_id: commissionUser.id,
+        commission_rate: commissionRate,
+      });
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess(t('分成比例更新成功'));
+        closeCommissionModal();
+        refresh();
+      } else {
+        showError(message || t('操作失败，请重试'));
+      }
+    } catch (error) {
+      showError(t('操作失败，请重试'));
+    }
+  };
+
   // Initialize data on component mount
   useEffect(() => {
     loadUsers(0, pageSize)
@@ -314,6 +350,15 @@ export const useUsersData = () => {
     closeAddUser,
     closeEditUser,
     getFormValues,
+
+    // 代理商分成
+    showCommissionModal,
+    commissionUser,
+    commissionRate,
+    setCommissionRate,
+    showCommissionModalForUser,
+    closeCommissionModal,
+    updateCommissionRate,
 
     // Translation
     t,

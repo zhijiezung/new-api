@@ -328,3 +328,15 @@ const (
 	MsgCustomOAuthBindingNotFound   = "custom_oauth.binding_not_found"
 	MsgCustomOAuthProviderIdInvalid = "custom_oauth.provider_id_field_invalid"
 )
+
+// Agent related messages
+const (
+	MsgAgentApplicationPending    = "agent.application_pending"
+	MsgAlreadyAgent               = "agent.already_agent"
+	MsgAgentApplicationApproved   = "agent.application_approved"
+	MsgAgentApplicationRejected   = "agent.application_rejected"
+	MsgDomainAlreadyUsed          = "agent.domain_already_used"
+	MsgDomainLimitExceeded        = "agent.domain_limit_exceeded"
+	MsgNoPermission               = "agent.no_permission"
+	MsgDomainVerified             = "agent.domain_verified"
+)

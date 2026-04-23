@@ -145,6 +145,9 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 
 	RecordTopupLog(topUp.UserId, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%d", logger.FormatQuota(int(quota)), topUp.Amount), callerIp, topUp.PaymentMethod, PaymentMethodStripe)
 
+	// 处理代理商分成
+	go ProcessAgentCommission(topUp.UserId, topUp.Id, int(quota))
+
 	return nil
 }
 
@@ -450,6 +453,9 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 
 	RecordTopupLog(topUp.UserId, fmt.Sprintf("使用Creem充值成功，充值额度: %v，支付金额：%.2f", quota, topUp.Money), callerIp, topUp.PaymentMethod, PaymentMethodCreem)
 
+	// 处理代理商分成
+	go ProcessAgentCommission(topUp.UserId, topUp.Id, int(quota))
+
 	return nil
 }
 
@@ -511,6 +517,8 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 
 	if quotaToAdd > 0 {
 		RecordTopupLog(topUp.UserId, fmt.Sprintf("Waffo充值成功，充值额度: %v，支付金额: %.2f", logger.FormatQuota(quotaToAdd), topUp.Money), callerIp, topUp.PaymentMethod, PaymentMethodWaffo)
+		// 处理代理商分成
+		go ProcessAgentCommission(topUp.UserId, topUp.Id, quotaToAdd)
 	}
 
 	return nil
@@ -572,6 +580,8 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 
 	if quotaToAdd > 0 {
 		RecordLog(topUp.UserId, LogTypeTopup, fmt.Sprintf("Waffo Pancake充值成功，充值额度: %v，支付金额: %.2f", logger.FormatQuota(quotaToAdd), topUp.Money))
+		// 处理代理商分成
+		go ProcessAgentCommission(topUp.UserId, topUp.Id, quotaToAdd)
 	}
 
 	return nil

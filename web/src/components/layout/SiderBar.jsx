@@ -25,7 +25,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useSidebarCollapsed } from '../../hooks/common/useSidebarCollapsed';
 import { useSidebar } from '../../hooks/common/useSidebar';
 import { useMinimumLoadingTime } from '../../hooks/common/useMinimumLoadingTime';
-import { isAdmin, isRoot, showError } from '../../helpers';
+import { isAdmin, isAgent, isRoot } from '../../helpers';
 import SkeletonWrapper from './components/SkeletonWrapper';
 
 import { Nav, Divider, Button } from '@douyinfe/semi-ui';
@@ -49,6 +49,11 @@ const routerMap = {
   deployment: '/console/deployment',
   playground: '/console/playground',
   personal: '/console/personal',
+  agent: '/console/agent',
+  agent_apply: '/console/agent',
+  agent_applications: '/console/agent-applications',
+  agent_withdrawals: '/console/agent-withdrawals',
+  agent_stats: '/console/agent-stats',
 };
 
 const SiderBar = ({ onNavigate = () => {} }) => {
@@ -199,6 +204,75 @@ const SiderBar = ({ onNavigate = () => {} }) => {
 
     return filteredItems;
   }, [isAdmin(), isRoot(), t, isModuleVisible]);
+
+  // 超管代理商管理菜单
+  const adminAgentItems = useMemo(() => {
+    const items = [
+      {
+        text: t('代理商审核'),
+        itemKey: 'agent_applications',
+        to: '/agent-applications',
+        className: isAdmin() ? '' : 'tableHiddle',
+      },
+      {
+        text: t('提现审核'),
+        itemKey: 'agent_withdrawals',
+        to: '/agent-withdrawals',
+        className: isAdmin() ? '' : 'tableHiddle',
+      },
+      {
+        text: t('代理数据看板'),
+        itemKey: 'agent_stats',
+        to: '/agent-stats',
+        className: isAdmin() ? '' : 'tableHiddle',
+      },
+    ];
+
+    // 根据配置过滤项目
+    const filteredItems = items.filter((item) => {
+      const configVisible = isModuleVisible('admin', item.itemKey);
+      return configVisible;
+    });
+
+    return filteredItems;
+  }, [isAdmin(), t, isModuleVisible]);
+
+  const agentItems = useMemo(() => {
+    const items = [
+      {
+        text: t('数据看板'),
+        itemKey: 'agent',
+        to: '/agent',
+      },
+    ];
+
+    // 根据配置过滤项目
+    const filteredItems = items.filter((item) => {
+      const configVisible = isModuleVisible('agent', item.itemKey);
+      return configVisible;
+    });
+
+    return filteredItems;
+  }, [t, isModuleVisible]);
+
+  // 普通用户申请代理商入口
+  const agentApplyItems = useMemo(() => {
+    const items = [
+      {
+        text: t('申请代理商'),
+        itemKey: 'agent_apply',
+        to: '/agent',
+      },
+    ];
+
+    // 根据配置过滤项目
+    const filteredItems = items.filter((item) => {
+      const configVisible = isModuleVisible('agent', 'agent');
+      return configVisible;
+    });
+
+    return filteredItems;
+  }, [t, isModuleVisible]);
 
   const chatMenuItems = useMemo(() => {
     const items = [
@@ -475,6 +549,32 @@ const SiderBar = ({ onNavigate = () => {} }) => {
             </>
           )}
 
+          {/* 代理商区域 - 仅代理商可见 */}
+          {hasSectionVisibleModules('agent') && !isAdmin() && isAgent() && (
+            <>
+              <Divider className='sidebar-divider' />
+              <div>
+                {!collapsed && (
+                  <div className='sidebar-group-label'>{t('代理商中心')}</div>
+                )}
+                {agentItems.map((item) => renderNavItem(item))}
+              </div>
+            </>
+          )}
+
+          {/* 申请代理商入口 - 普通用户可见 */}
+          {hasSectionVisibleModules('agent') && !isAdmin() && !isAgent() && (
+            <>
+              <Divider className='sidebar-divider' />
+              <div>
+                {!collapsed && (
+                  <div className='sidebar-group-label'>{t('代理商')}</div>
+                )}
+                {agentApplyItems.map((item) => renderNavItem(item))}
+              </div>
+            </>
+          )}
+
           {/* 管理员区域 - 只在管理员时显示且配置允许时显示 */}
           {isAdmin() && hasSectionVisibleModules('admin') && (
             <>
@@ -484,6 +584,19 @@ const SiderBar = ({ onNavigate = () => {} }) => {
                   <div className='sidebar-group-label'>{t('管理员')}</div>
                 )}
                 {adminItems.map((item) => renderNavItem(item))}
+              </div>
+            </>
+          )}
+
+          {/* 超管代理商管理区域 - 独立分组 */}
+          {isAdmin() && adminAgentItems.length > 0 && (
+            <>
+              <Divider className='sidebar-divider' />
+              <div>
+                {!collapsed && (
+                  <div className='sidebar-group-label'>{t('代理商管理')}</div>
+                )}
+                {adminAgentItems.map((item) => renderNavItem(item))}
               </div>
             </>
           )}

@@ -29,6 +29,7 @@ import {
 import {
   isRoot,
   isAdmin,
+  isAgent,
   renderQuota,
   stringToColor,
 } from '../../../../helpers';
@@ -95,6 +96,14 @@ const UserInfoHeader = ({ t, userState }) => {
                         style={{ color: 'white' }}
                       >
                         {t('管理员')}
+                      </Tag>
+                    ) : isAgent() ? (
+                      <Tag
+                        size='large'
+                        shape='circle'
+                        style={{ color: 'white' }}
+                      >
+                        {t('代理商')}
                       </Tag>
                     ) : (
                       <Tag

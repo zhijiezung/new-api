@@ -25,9 +25,12 @@ import UsersFilters from './UsersFilters';
 import UsersDescription from './UsersDescription';
 import AddUserModal from './modals/AddUserModal';
 import EditUserModal from './modals/EditUserModal';
+import { Modal, InputNumber, Typography } from '@douyinfe/semi-ui';
 import { useUsersData } from '../../../hooks/users/useUsersData';
 import { useIsMobile } from '../../../hooks/common/useIsMobile';
 import { createCardProPagination } from '../../../helpers/utils';
+
+const { Title, Text } = Typography;
 
 const UsersPage = () => {
   const usersData = useUsersData();
@@ -58,6 +61,14 @@ const UsersPage = () => {
     compactMode,
     setCompactMode,
 
+    // 代理商分成
+    showCommissionModal,
+    commissionUser,
+    commissionRate,
+    setCommissionRate,
+    closeCommissionModal,
+    updateCommissionRate,
+
     // Translation
     t,
   } = usersData;
@@ -76,6 +87,32 @@ const UsersPage = () => {
         handleClose={closeEditUser}
         editingUser={editingUser}
       />
+
+      {/* 代理商分成比例调整弹窗 */}
+      <Modal
+        title={t('调整分成比例')}
+        visible={showCommissionModal}
+        onCancel={closeCommissionModal}
+        onOk={updateCommissionRate}
+        okText={t('确认')}
+        cancelText={t('取消')}
+      >
+        <div style={{ marginBottom: '16px' }}>
+          <Text>{t('用户')}: {commissionUser?.username} (ID: {commissionUser?.id})</Text>
+        </div>
+        <div style={{ marginBottom: '16px' }}>
+          <Text>{t('分成比例（百分比）')}:</Text>
+          <InputNumber
+            value={commissionRate}
+            onChange={(value) => setCommissionRate(value)}
+            min={0}
+            max={100}
+            style={{ width: '120px', marginLeft: '8px' }}
+            suffix="%"
+          />
+        </div>
+        <Text type="tertiary">{t('用户充值时，该代理商可获得的分成比例')}</Text>
+      </Modal>
 
       <CardPro
         type='type1'

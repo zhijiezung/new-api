@@ -174,12 +174,41 @@ func Register(c *gin.Context) {
 	}
 	affCode := user.AffCode // this code is the inviter's code, not the user's own code
 	inviterId, _ := model.GetUserIdByAffCode(affCode)
+
+	// 检查请求域名是否关联代理商
+	var agentId int = 0
+	var agentDomainId int = 0
+	// 优先使用 X-Forwarded-Host（代理场景），否则使用 Host
+	host := c.GetHeader("X-Forwarded-Host")
+	if host == "" {
+		host = c.Request.Host
+	}
+	// 移除端口号
+	if idx := strings.Index(host, ":"); idx != -1 {
+		host = host[:idx]
+	}
+	common.SysLog(fmt.Sprintf("用户注册检测域名: X-Forwarded-Host=%s, 原始Host=%s, 处理后host=%s", c.GetHeader("X-Forwarded-Host"), c.Request.Host, host))
+	
+	// 查找该域名是否关联代理商
+	agentDomain, err := model.GetAgentDomainByDomain(host)
+	if err == nil && agentDomain != nil {
+		agentId = agentDomain.AgentId
+		agentDomainId = agentDomain.Id
+		// 增加注册计数
+		_ = agentDomain.IncrementRegisterCount()
+		common.SysLog(fmt.Sprintf("用户注册关联代理商成功: host=%s, agentId=%d, agentDomainId=%d, domainStatus=%d", host, agentId, agentDomainId, agentDomain.Status))
+	} else {
+		common.SysLog(fmt.Sprintf("用户注册未关联代理商: host=%s, err=%v", host, err))
+	}
+
 	cleanUser := model.User{
-		Username:    user.Username,
-		Password:    user.Password,
-		DisplayName: user.Username,
-		InviterId:   inviterId,
-		Role:        common.RoleCommonUser, // 明确设置角色为普通用户
+		Username:      user.Username,
+		Password:      user.Password,
+		DisplayName:   user.Username,
+		InviterId:     inviterId,
+		AgentId:       agentId,
+		AgentDomainId: agentDomainId,
+		Role:          common.RoleCommonUser, // 明确设置角色为普通用户
 	}
 	if common.EmailVerificationEnabled {
 		cleanUser.Email = user.Email

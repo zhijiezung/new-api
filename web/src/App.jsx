@@ -21,7 +21,7 @@ import React, { lazy, Suspense, useContext, useMemo } from 'react';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import Loading from './components/common/ui/Loading';
 import User from './pages/User';
-import { AuthRedirect, PrivateRoute, AdminRoute } from './helpers';
+import { AuthRedirect, PrivateRoute, AdminRoute, AgentRoute } from './helpers';
 import RegisterForm from './components/auth/RegisterForm';
 import LoginForm from './components/auth/LoginForm';
 import NotFound from './pages/NotFound';
@@ -49,6 +49,10 @@ import OAuth2Callback from './components/auth/OAuth2Callback';
 import PersonalSetting from './components/settings/PersonalSetting';
 import Setup from './pages/Setup';
 import SetupCheck from './components/layout/SetupCheck';
+import AgentDashboard from './pages/Agent';
+import AgentApplicationManagement from './pages/AgentApplication';
+import AgentWithdrawalManagement from './pages/AgentWithdrawal';
+import AgentStats from './pages/AgentStats';
 
 const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -265,6 +269,38 @@ function App() {
                 <PersonalSetting />
               </Suspense>
             </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/agent'
+          element={
+            <PrivateRoute>
+              <AgentDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/agent-applications'
+          element={
+            <AdminRoute>
+              <AgentApplicationManagement />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/agent-stats'
+          element={
+            <AdminRoute>
+              <AgentStats />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/agent-withdrawals'
+          element={
+            <AdminRoute>
+              <AgentWithdrawalManagement />
+            </AdminRoute>
           }
         />
         <Route
